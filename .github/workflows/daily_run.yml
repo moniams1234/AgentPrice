@@ -1,0 +1,39 @@
+name: Codzienny monitoring cen surowców
+
+on:
+  schedule:
+    # 6:00 UTC codziennie (7:00/8:00 czasu polskiego, zależnie od DST)
+    - cron: "0 6 * * *"
+  workflow_dispatch: {}  # pozwala uruchomić ręcznie z zakładki Actions
+
+jobs:
+  run-agent:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalacja zależności
+        run: pip install -r requirements.txt
+
+      - name: Uruchomienie pipeline'u
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          ALERT_EMAIL_TO: ${{ secrets.ALERT_EMAIL_TO }}
+        run: python main.py
+
+      - name: Zapisz zaktualizowaną bazę danych
+        run: |
+          git config user.name "price-monitor-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add data/prices.db
+          git diff --quiet && git diff --staged --quiet || git commit -m "Aktualizacja bazy sygnałów cenowych"
+          git push
