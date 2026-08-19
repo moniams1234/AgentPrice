@@ -5,7 +5,10 @@ on:
     # 6:00 UTC codziennie (7:00/8:00 czasu polskiego, zależnie od DST)
     - cron: "0 6 * * *"
   workflow_dispatch: {}  # pozwala uruchomić ręcznie z zakładki Actions
-
+  
+permissions:
+  contents: write
+  
 jobs:
   run-agent:
     runs-on: ubuntu-latest
